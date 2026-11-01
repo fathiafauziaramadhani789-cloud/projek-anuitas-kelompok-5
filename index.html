@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Anuitas - Kelompok 5</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 650px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #333;
+            text-align: center;
+        }
+        .credits {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+        .result-item span.value {
+            font-weight: bold;
+            color: #007bff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+        td:first-child {
+            text-align: center;
+        }
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Kalkulator Anuitas</h2>
+    <div class="credits">
+        Dibuat oleh <strong>Kelompok 5</strong>:<br>
+        Fathia Fauzia, Evan Fadilah, Derafa Abdi, Rafa Aini, Salwa Zivana
+    </div>
+    
+    <div class="form-group">
+        <label>Mata Uang</label>
+        <select id="currency">
+            <option value="Rp">Rupiah (Rp)</option>
+            <option value="$">USD ($)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Jumlah Pinjaman (Pokok)</label>
+        <input type="number" id="principal" value="120000000" placeholder="Masukkan jumlah pinjaman">
+    </div>
+
+    <div class="form-group">
+        <label>Suku Bunga Pertahun (%)</label>
+        <input type="number" id="rate" value="12" step="0.1" placeholder="Contoh: 12">
+    </div>
+
+    <div class="form-group">
+        <label>Jangka Waktu (Tenor)</label>
+        <input type="number" id="tenure" value="12" placeholder="Masukkan lama pinjaman">
+    </div>
+
+    <div class="form-group">
+        <label>Satuan Tenor</label>
+        <select id="tenureUnit">
+            <option value="months">Bulan</option>
+            <option value="years">Tahun</option>
+        </select>
+    </div>
+
+    <button onclick="calculateAnnuity()">Hitung Anuitas</button>
+
+    <div class="result-box" id="resultBox" style="display: none;">
+        <div class="result-item">
+            <span>Angsuran per Bulan:</span>
+            <span class="value" id="monthlyPayment">-</span>
+        </div>
+        <div class="result-item">
+            <span>Total Pembayaran:</span>
+            <span class="value" id="totalPayment">-</span>
+        </div>
+        <div class="result-item">
+            <span>Total Bunga:</span>
+            <span class="value" id="totalInterest">-</span>
+        </div>
+    </div>
+
+    <table id="scheduleTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Bulan</th>
+                <th>Angsuran</th>
+                <th>Bunga</th>
+                <th>Pokok</th>
+                <th>Sisa Pinjaman</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <footer>
+        &copy; Kelompok 5 - Tugas Kalkulator Anuitas
+    </footer>
+</div>
+
+<script>
+    function formatCurrency(amount, symbol) {
+        return symbol + " " + Math.round(amount).toLocaleString('id-ID');
+    }
+
+    function calculateAnnuity() {
+        const symbol = document.getElementById('currency').value;
+        const P = parseFloat(document.getElementById('principal').value);
+        const annualRate = parseFloat(document.getElementById('rate').value) / 100;
+        let tenure = parseInt(document.getElementById('tenure').value);
+        const tenureUnit = document.getElementById('tenureUnit').value;
+
+        if (isNaN(P) || isNaN(annualRate) || isNaN(tenure) || P <= 0 || tenure <= 0) {
+            alert("Harap masukkan nilai angka yang valid.");
+            return;
+        }
+
+        const totalMonths = tenureUnit === 'years' ? tenure * 12 : tenure;
+        const i = annualRate / 12;
+
+        let A = 0;
+        if (i === 0) {
+            A = P / totalMonths;
+        } else {
+            A = (P * i * Math.pow(1 + i, totalMonths)) / (Math.pow(1 + i, totalMonths) - 1);
+        }
+
+        let balance = P;
+        let totalInterestPaid = 0;
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        for (let month = 1; month <= totalMonths; month++) {
+            let interestPayment = balance * i;
+            let principalPayment = A - interestPayment;
+            balance -= principalPayment;
+            
+            if (balance < 0) balance = 0;
+            totalInterestPaid += interestPayment;
+
+            let row = `<tr>
+                <td>${month}</td>
+                <td>${formatCurrency(A, symbol)}</td>
+                <td>${formatCurrency(interestPayment, symbol)}</td>
+                <td>${formatCurrency(principalPayment, symbol)}</td>
+                <td>${formatCurrency(balance, symbol)}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        }
+
+        const totalPayment = P + totalInterestPaid;
+
+        document.getElementById('monthlyPayment').innerText = formatCurrency(A, symbol);
+        document.getElementById('totalPayment').innerText = formatCurrency(totalPayment, symbol);
+        document.getElementById('totalInterest').innerText = formatCurrency(totalInterestPaid, symbol);
+
+        document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('scheduleTable').style.display = 'table';
+    }
+
+    calculateAnnuity();
+</script>
+
+</body>
+</html>
